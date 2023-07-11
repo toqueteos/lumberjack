@@ -12,7 +12,7 @@ import (
 
 func TestMaintainMode(t *testing.T) {
 	currentTime = fakeTime
-	dir := makeTempDir("TestMaintainMode", t)
+	dir := t.TempDir()
 	defer os.RemoveAll(dir)
 
 	filename := logFile(dir)
@@ -53,7 +53,7 @@ func TestMaintainOwner(t *testing.T) {
 		osStat = os.Stat
 	}()
 	currentTime = fakeTime
-	dir := makeTempDir("TestMaintainOwner", t)
+	dir := t.TempDir()
 	defer os.RemoveAll(dir)
 
 	filename := logFile(dir)
@@ -82,7 +82,7 @@ func TestMaintainOwner(t *testing.T) {
 func TestCompressMaintainMode(t *testing.T) {
 	currentTime = fakeTime
 
-	dir := makeTempDir("TestCompressMaintainMode", t)
+	dir := t.TempDir()
 	defer os.RemoveAll(dir)
 
 	filename := logFile(dir)
@@ -129,7 +129,7 @@ func TestCompressMaintainOwner(t *testing.T) {
 		osStat = os.Stat
 	}()
 	currentTime = fakeTime
-	dir := makeTempDir("TestCompressMaintainOwner", t)
+	dir := t.TempDir()
 	defer os.RemoveAll(dir)
 
 	filename := logFile(dir)

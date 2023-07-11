@@ -1,20 +1,4 @@
 // Package lumberjack provides a rolling logger.
-//
-// Note that this is v3.0 of lumberjack.
-//
-// Lumberjack is intended to be one part of a logging infrastructure.
-// It is not an all-in-one solution, but instead is a pluggable
-// component at the bottom of the logging stack that simply controls the files
-// to which logs are written.
-//
-// Lumberjack plays well with any logging package that can write to an
-// io.Writer, including the standard library's log package.
-//
-// Lumberjack assumes that only one process is writing to the output files.
-// Using the same lumberjack configuration from multiple processes on the same
-// machine will result in improper behavior. Letting outside processes write to
-// or manipulate the file that lumberjack writes to will also result in improper
-// behavior.
 package lumberjack
 
 import (
@@ -22,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -119,7 +103,7 @@ func NewRoller(filename string, maxSize int64, opt *Options) (*Roller, error) {
 // `/var/log/foo/server.log`, a backup created at 6:30pm on Nov 11 2016 would
 // use the filename `/var/log/foo/server-2016-11-04T18-30-00.000.log`
 //
-// Cleaning Up Old Log Files
+// # Cleaning Up Old Log Files
 //
 // Whenever a new logfile gets created, old log files may be deleted. The most
 // recent files according to the encoded timestamp will be retained, up to a
@@ -437,7 +421,7 @@ func (r *Roller) mill() {
 // oldLogFiles returns the list of backup log files stored in the same
 // directory as the current log file, sorted by ModTime
 func (r *Roller) oldLogFiles() ([]logInfo, error) {
-	files, err := ioutil.ReadDir(r.dir())
+	files, err := os.ReadDir(r.dir())
 	if err != nil {
 		return nil, fmt.Errorf("can't read log file directory: %s", err)
 	}
@@ -450,11 +434,11 @@ func (r *Roller) oldLogFiles() ([]logInfo, error) {
 			continue
 		}
 		if t, err := r.timeFromName(f.Name(), prefix, ext); err == nil {
-			logFiles = append(logFiles, logInfo{t, f})
+			logFiles = append(logFiles, logInfo{DirEntry: f, timestamp: t})
 			continue
 		}
 		if t, err := r.timeFromName(f.Name(), prefix, ext+compressSuffix); err == nil {
-			logFiles = append(logFiles, logInfo{t, f})
+			logFiles = append(logFiles, logInfo{DirEntry: f, timestamp: t})
 			continue
 		}
 		// error parsing means that the suffix at the end was not generated
@@ -468,7 +452,7 @@ func (r *Roller) oldLogFiles() ([]logInfo, error) {
 
 // timeFromName extracts the formatted time from the filename by stripping off
 // the filename's prefix and extension. This prevents someone's filename from
-// confusing time.parse.
+// confusing time.Parse.
 func (r *Roller) timeFromName(filename, prefix, ext string) (time.Time, error) {
 	if !strings.HasPrefix(filename, prefix) {
 		return time.Time{}, errors.New("mismatched prefix")
@@ -538,7 +522,6 @@ func compressLogFile(src, dst string) (err error) {
 	if err := gzf.Close(); err != nil {
 		return err
 	}
-
 	if err := f.Close(); err != nil {
 		return err
 	}
@@ -549,11 +532,10 @@ func compressLogFile(src, dst string) (err error) {
 	return nil
 }
 
-// logInfo is a convenience struct to return the filename and its embedded
-// timestamp.
+// logInfo is a convenience struct to return the filename and its embedded timestamp.
 type logInfo struct {
+	fs.DirEntry
 	timestamp time.Time
-	os.FileInfo
 }
 
 // byFormatTime sorts by newest time formatted in the name.
