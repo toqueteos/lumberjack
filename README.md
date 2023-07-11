@@ -31,11 +31,15 @@ To use lumberjack with the standard library's log package, just pass it into the
 Code:
 
 ```go
-log.SetOutput(&lumberjack.Logger{
-    Filename:   "/var/log/myapp/foo.log",
-    MaxSize:    500, // megabytes
+const size500MiB = 500 >> 20
+r, err := NewRoller("/var/log/myapp/foo.log", size500MiB, &Options{
+    MaxAge:     28 * (time.Hour * 24),
     MaxBackups: 3,
-    MaxAge:     28, //days
-    Compress:   true, // disabled by default
+    Compress:   true,
 })
+if err != nil {
+    // handle err
+}
+
+log.SetOutput(r)
 ```
