@@ -141,7 +141,6 @@ func TestAutoRotate(t *testing.T) {
 
 	// the backup file will use the current fake time and have the old contents.
 	existsWithContent(backupFile(dir), b, t)
-
 }
 
 func TestFirstWriteRotate(t *testing.T) {
@@ -169,7 +168,6 @@ func TestFirstWriteRotate(t *testing.T) {
 
 	existsWithContent(filename, b, t)
 	existsWithContent(backupFile(dir), start, t)
-
 }
 
 func TestMaxBackups(t *testing.T) {

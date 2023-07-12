@@ -18,7 +18,6 @@ import (
 const (
 	backupTimeFormat = "2006-01-02T15-04-05.000"
 	compressSuffix   = ".gz"
-	defaultMaxSize   = 100
 )
 
 var (
@@ -234,7 +233,7 @@ func (r *Roller) openNew() error {
 	}
 
 	name := r.newFilename()
-	mode := os.FileMode(0600)
+	mode := fs.FileMode(0600)
 	info, err := osStat(name)
 	if err == nil {
 		// Copy the mode off the old logfile.
@@ -288,7 +287,7 @@ func (r *Roller) openExistingOrNew(writeLen int64) error {
 
 	filename := r.newFilename()
 	info, err := osStat(filename)
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		return r.openNew()
 	}
 	if err != nil {
@@ -341,10 +340,7 @@ func (r *Roller) millRunOnce() error {
 		for _, f := range files {
 			// Only count the uncompressed log file or the
 			// compressed log file, not both.
-			fn := f.Name()
-			if strings.HasSuffix(fn, compressSuffix) {
-				fn = fn[:len(fn)-len(compressSuffix)]
-			}
+			fn := strings.TrimSuffix(f.Name(), compressSuffix)
 			preserved[fn] = true
 
 			if len(preserved) > r.maxBackups {
