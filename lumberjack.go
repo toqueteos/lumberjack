@@ -21,15 +21,13 @@ const (
 	defaultMaxSize   = 100
 )
 
-type constError string
-
-func (c constError) Error() string {
-	return string(c)
-}
-
-// ErrWriteTooLong indicates that a single write that is longer than the max
-// size allowed in a single file.
-const ErrWriteTooLong = constError("write exceeds max file length")
+var (
+	ErrFilenameEmpty     = errors.New("filename cannot be empty")
+	ErrMaxSizeZero       = errors.New("max size cannot be 0")
+	ErrMismatchExtension = errors.New("mismatched extension")
+	ErrMismatchPrefix    = errors.New("mismatched prefix")
+	ErrWriteTooLong      = errors.New("write exceeds max file length")
+)
 
 // Options represents optional behavior you can specify for a new Roller.
 type Options struct {
@@ -66,10 +64,10 @@ type Options struct {
 // 0 or less.
 func NewRoller(filename string, maxSize int64, opt *Options) (*Roller, error) {
 	if maxSize <= 0 {
-		return nil, errors.New("max size cannot be 0")
+		return nil, ErrMaxSizeZero
 	}
 	if filename == "" {
-		return nil, errors.New("filename cannot be empty")
+		return nil, ErrFilenameEmpty
 	}
 	r := &Roller{
 		filename: filename,
@@ -455,10 +453,10 @@ func (r *Roller) oldLogFiles() ([]logInfo, error) {
 // confusing time.Parse.
 func (r *Roller) timeFromName(filename, prefix, ext string) (time.Time, error) {
 	if !strings.HasPrefix(filename, prefix) {
-		return time.Time{}, errors.New("mismatched prefix")
+		return time.Time{}, ErrMismatchPrefix
 	}
 	if !strings.HasSuffix(filename, ext) {
-		return time.Time{}, errors.New("mismatched extension")
+		return time.Time{}, ErrMismatchExtension
 	}
 	ts := filename[len(prefix) : len(filename)-len(ext)]
 	return time.Parse(backupTimeFormat, ts)
